@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Receipt Generator</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+    <style>
+        body {
+            font-family: Arial;
+            background: #f4f4f4;
+            text-align: center;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            margin: 30px auto;
+            width: 400px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px gray;
+        }
+        input {
+            width: 40%;
+            padding: 8px;
+            margin: 5px;
+        }
+        button {
+            padding: 10px;
+            margin: 5px;
+            background: green;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        table {
+            width: 100%;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+    <h2>Receipt Generator</h2>
+
+    <input type="text" id="name" placeholder="Customer Name"><br>
+
+    <h3>Add Items</h3>
+    <input type="text" id="itemName" placeholder="Item Name">
+    <input type="number" id="itemPrice" placeholder="Price">
+    <button onclick="addItem()">Add Item</button>
+
+    <table border="1">
+        <thead>
+            <tr>
+                <th>Item</th>
+                <th>Price (Rs)</th>
+            </tr>
+        </thead>
+        <tbody id="itemList"></tbody>
+    </table>
+
+    <h3 id="total">Total: Rs 0</h3>
+
+    <button onclick="downloadPDF(), saveToBackend()">Download PDF</button>
+    <!-- <button onclick="saveToBackend()">Save Receipt</button> -->
+</div>
+
+<script>
+let items = [];
+let total = 0;
+
+function addItem() {
+    let name = document.getElementById("itemName").value;
+    let price = parseFloat(document.getElementById("itemPrice").value);
+
+    if (!name || isNaN(price)) {
+        alert("Enter valid item and price");
+        return;
+    }
+
+    items.push({ name, price });
+    total += price;
+
+    updateTable();
+
+    document.getElementById("itemName").value = "";
+    document.getElementById("itemPrice").value = "";
+}
+
+function updateTable() {
+    let table = document.getElementById("itemList");
+    table.innerHTML = "";
+
+    items.forEach(item => {
+        let row = `<tr>
+                    <td>${item.name}</td>
+                    <td>${item.price}</td>
+                  </tr>`;
+        table.innerHTML += row;
+    });
+
+    document.getElementById("total").innerText = "Total: Rs " + total;
+}
+
+function generatePDFDoc() {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+
+    doc.setFont("helvetica", "normal"); // ✅ FIXED FONT ISSUE
+
+    let customer = document.getElementById("name").value;
+    let date = new Date().toLocaleDateString();
+
+    doc.setFontSize(18);
+    doc.text("Receipt", 80, 20);
+
+    doc.setFontSize(12);
+    doc.text("Customer: " + customer, 20, 40);
+    doc.text("Date: " + date, 20, 50);
+
+    let y = 70;
+
+    doc.text("Items:", 20, y);
+    y += 10;
+
+    items.forEach(item => {
+        doc.text(item.name + " - Rs " + item.price, 20, y);
+        y += 10;
+    });
+
+    doc.text("-----------------------------", 20, y);
+    y += 10;
+
+    doc.text("Total Bill : Rs " + total, 20, y);
+
+    doc.text("Thank You!", 20, y + 20);
+
+    return doc;
+}
+
+function downloadPDF() {
+    if (items.length === 0) {
+        alert("Add at least one item");
+        return;
+    }
+
+    let doc = generatePDFDoc();
+    doc.save("receipt.pdf");
+}
+
+    // Backend part
+async function saveToBackend() {
+    let customer = document.getElementById("name").value;
+
+    if (items.length === 0) {
+        alert("Add items first");
+        return;
+    }
+
+    const response = await fetch("/save-receipt", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            customer,
+            items,
+            total
+        })
+    });
+
+    const data = await response.json();
+    alert(data.message);
+}
+</script>
+
+</body>
+</html>
