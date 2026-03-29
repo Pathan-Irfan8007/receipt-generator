@@ -1,0 +1,19 @@
+{
+  "name": "receipt-project",
+  "version": "1.0.0",
+  "description": "Receipt Generator Backend",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "keywords": [],
+  "type": "commonjs",
+  "dependencies": {
+    "body-parser": "^2.2.2",
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
+    "mongoose": "^9.3.3"
+  }
+}
